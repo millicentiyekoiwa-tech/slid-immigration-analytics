@@ -408,12 +408,12 @@ with hc2:
 # TABS
 # ═══════════════════════════════════════════════════════════
 tabs = st.tabs([
-    " Overview",
-    " Passport",
-    " Residency Permit",
-    " Process Performance",
-    " Revenue Forecast",
-    " Predictive Analytics",
+    "📊  Overview",
+    "🛂  Passport",
+    "📋  Residency Permit",
+    "⚙️  Process Performance",
+    "💰  Revenue Forecast",
+    "🔮  Predictive Analytics",
 ])
  
 # ──────────────────────────────────────────────────────────
