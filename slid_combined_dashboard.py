@@ -219,16 +219,20 @@ def load_rp():
 @st.cache_resource
 def load_models():
     try:
-        lr  = joblib.load("slid_logistic_model.joblib")
-        sc  = joblib.load("slid_scaler.joblib")
-        lc  = joblib.load("slid_le_category.joblib")
-        lp  = joblib.load("slid_le_process.joblib")
-        with open("slid_feature_meta.json") as f:
+        import os
+        base = os.path.dirname(os.path.abspath(__file__))                if "__file__" in dir() else "."
+        def lp_(name): return os.path.join(base, name)
+        lr  = joblib.load(lp_("slid_logistic_model.joblib"))
+        sc  = joblib.load(lp_("slid_scaler.joblib"))
+        lc  = joblib.load(lp_("slid_le_category.joblib"))
+        lp  = joblib.load(lp_("slid_le_process.joblib"))
+        with open(lp_("slid_feature_meta.json")) as f:
             meta = json.load(f)
-        with open("slid_ols_params.json") as f:
+        with open(lp_("slid_ols_params.json")) as f:
             ols_ = json.load(f)
         return lr, sc, lc, lp, meta, ols_, True
     except Exception as e:
+        st.write(f"Model load error: {e}")
         return None, None, None, None, {}, {}, False
 
 @st.cache_data
@@ -262,21 +266,27 @@ lr_,sc_,lc_,lp_,meta_,ols_p,ok = load_models()
 # ── Sidebar navigation ──────────────────────────────────────
 with st.sidebar:
     st.markdown(f"""
-    <div style="text-align:center;padding:0.8rem 0 1rem;">
-      <div style="font-size:2rem;">🛂</div>
-      <div style="font-weight:700;color:{P['text']};font-size:1rem;">
-        SLID Analytics</div>
-      <div style="font-size:0.72rem;color:{P['sub']};">
-        Immigration Services Dashboard</div>
+    <div style="text-align:center;padding:0.8rem 0 0.5rem;">
+      <div style="font-size:2.5rem;">🇸🇱</div>
+      <div style="font-size:1.4rem;margin:0.3rem 0;">🛂</div>
+      <div style="font-weight:700;color:{P['text']};font-size:0.95rem;
+        letter-spacing:0.05em;">SLID ANALYTICS</div>
+      <div style="font-size:0.68rem;color:{P['sub']};margin-top:0.15rem;">
+        Sierra Leone Immigration Department</div>
+      <div style="font-size:0.62rem;color:{P['sub']};margin-top:0.5rem;
+        border-top:1px solid {P['border']};padding-top:0.4rem;">
+        🎓 MSc Business Analytics<br>
+        American University of Beirut<br>
+        Suliman S. Olayan School of Business</div>
     </div>""", unsafe_allow_html=True)
     st.divider()
     page = st.radio("", [
-        "📊  Overview",
-        "🛂  Passport Analysis",
-        "📋  Residency Permit",
-        "⚙️  Process Performance",
-        "💰  Revenue Forecast",
-        "🔮  Predictive Analytics",
+        "📊 Overview",
+        "🛂 Passport Analysis",
+        "📋 Residency Permit Analysis",
+        "⚙️ Process Performance",
+        "💰 Revenue Forecast",
+        "🔮 Predictive Analytics",
     ], label_visibility="collapsed")
     st.divider()
     st.caption(
@@ -300,7 +310,7 @@ st.markdown(f"""
 # ════════════════════════════════════════════════════════════
 # PAGE: OVERVIEW
 # ════════════════════════════════════════════════════════════
-if page == "📊  Overview":
+if page == "📊 Overview":
     with st.expander("🔽 Filters", expanded=False):
         c1,c2 = st.columns(2)
         with c1:
@@ -360,16 +370,10 @@ if page == "📊  Overview":
         fig2 = go.Figure()
         fig2.add_trace(go.Bar(
             x=fpp["MF"],y=fpp["Rev"],name="Passport (Est.)",
-            marker_color=P["steel"],opacity=0.85,
-            text=fpp["Rev"].apply(lambda x:f"${x/1e6:.2f}M"),
-            textposition="inside",
-            textfont=dict(color="white",size=10)))
+            marker_color=P["steel"],opacity=0.85))
         fig2.add_trace(go.Bar(
             x=rp_r["Month"],y=rp_r["Rev"],name="Residency Permit",
-            marker_color=P["teal"],opacity=0.85,
-            text=rp_r["Rev"].apply(lambda x:f"${x/1e6:.2f}M"),
-            textposition="inside",
-            textfont=dict(color="white",size=10)))
+            marker_color=P["teal"],opacity=0.85))
         L(fig2,380,True)
         fig2.update_layout(barmode="group")
         fig2.update_yaxes(tickformat="$,.0f",title_text="Revenue (USD)")
@@ -386,8 +390,7 @@ if page == "📊  Overview":
             values=[fpp["Rev"].sum(),fdf["Amount ($)"].sum()],
             hole=0.55,
             marker_colors=[P["steel"],P["teal"]],
-            textinfo="label+percent",
-            textfont=dict(color="white",size=11)))
+            textinfo="label+percent"))
         L(fig3,300,show_legend=False)
         st.plotly_chart(fig3, use_container_width=True)
 
@@ -407,7 +410,7 @@ if page == "📊  Overview":
 # ════════════════════════════════════════════════════════════
 # PAGE: PASSPORT
 # ════════════════════════════════════════════════════════════
-elif page == "🛂  Passport Analysis":
+elif page == "🛂 Passport Analysis":
     with st.expander("🔽 Filters", expanded=False):
         sel_pp2 = st.multiselect("Passport Month",
             pp["Month"].tolist(),
@@ -453,8 +456,7 @@ elif page == "🛂  Passport Analysis":
             fig2.add_trace(go.Pie(
                 labels=td["Type"],values=td[col],hole=0.5,
                 textinfo="label+percent",
-                marker_colors=[P["steel"],P["teal"],P["gold"]],
-                textfont=dict(color="white",size=11)),row=1,col=i+1)
+                marker_colors=[P["steel"],P["teal"],P["gold"]]),row=1,col=i+1)
         L(fig2,380,show_legend=False)
         for a in fig2.layout.annotations:
             a.font.color = P["sub"]
@@ -513,14 +515,16 @@ elif page == "🛂  Passport Analysis":
             projection="natural earth")
         fig5.update_geos(
             visible=True,resolution=50,
-            showcountries=True,countrycolor=P["border"],
-            showcoastlines=True,coastlinecolor=P["border"],
-            showland=True,landcolor="#1A2B3C",
-            showocean=True,oceancolor=P["dark"],
-            showlakes=False,
+            showcountries=True,countrycolor="#A8C5D8",
+            showcoastlines=True,coastlinecolor="#A8C5D8",
+            showland=True,landcolor="#1D3557",
+            showocean=True,oceancolor="#0D1B2A",
+            showlakes=False,showrivers=False,
+            showsubunits=True,subunitcolor="#457B9D",
             center={"lat":8.5,"lon":-11.8},
             lataxis_range=[6.5,10.5],
-            lonaxis_range=[-14.5,-10.0])
+            lonaxis_range=[-14.5,-10.0],
+            bgcolor="rgba(0,0,0,0)")
         fig5.update_layout(
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
@@ -552,7 +556,7 @@ elif page == "🛂  Passport Analysis":
 # ════════════════════════════════════════════════════════════
 # PAGE: RESIDENCY PERMIT
 # ════════════════════════════════════════════════════════════
-elif page == "📋  Residency Permit":
+elif page == "📋 Residency Permit Analysis":
     with st.expander("🔽 Filters", expanded=False):
         rc1,rc2 = st.columns(2)
         with rc1:
@@ -588,9 +592,7 @@ elif page == "📋  Residency Permit":
         fig = make_subplots(specs=[[{"secondary_y":True}]])
         fig.add_trace(go.Bar(
             x=m3["Month"],y=m3["Apps"],name="Applications",
-            marker_color=P["steel"],opacity=0.85,
-            text=m3["Apps"],textposition="outside",
-            textfont=dict(color=P["sub"],size=9)),secondary_y=False)
+            marker_color=P["steel"],opacity=0.85),secondary_y=False)
         fig.add_trace(go.Scatter(
             x=m3["Month"],y=m3["Rev"],name="Revenue ($)",
             mode="lines+markers",
@@ -616,8 +618,6 @@ elif page == "📋  Residency Permit":
                  else P["steel"] for s in sd["Status"]]
         fig2 = go.Figure(go.Bar(
             x=sd["Count"],y=sd["Status"],orientation="h",
-            text=sd["Count"],textposition="outside",
-            textfont=dict(color=P["sub"],size=9),
             marker_color=bar_c))
         L(fig2,380,show_legend=False)
         fig2.update_xaxes(title_text="Count")
@@ -640,15 +640,10 @@ elif page == "📋  Residency Permit":
         fig3.add_trace(go.Bar(
             x=cs["Category"],y=cs["Count"],
             marker_color=P["steel"],
-            text=cs["Count"],textposition="outside",
-            textfont=dict(color=P["sub"],size=9),
             name="Applications"),row=1,col=1)
         fig3.add_trace(go.Bar(
             x=cs["Category"],y=cs["Revenue"],
             marker_color=P["teal"],
-            text=cs["Revenue"].apply(lambda x:f"${x:,.0f}"),
-            textposition="outside",
-            textfont=dict(color=P["sub"],size=9),
             name="Revenue"),row=2,col=1)
         L(fig3,520,show_legend=False)
         for a in fig3.layout.annotations:
@@ -664,9 +659,6 @@ elif page == "📋  Residency Permit":
                 else P["red"] for v in cs["DR"]]
         fig4.add_trace(go.Bar(
             x=cs["Category"],y=cs["DR"],marker_color=dr_c,
-            text=cs["DR"].apply(lambda x:f"{x:.1f}%"),
-            textposition="outside",
-            textfont=dict(color=P["sub"],size=9),
             name="DR"),row=1,col=1)
         fig4.add_hline(y=74.7,line_dash="dash",
                        line_color=P["gold"],row=1,col=1,
@@ -675,9 +667,6 @@ elif page == "📋  Residency Permit":
         fig4.add_trace(go.Bar(
             x=cs["Category"],y=cs["AvgFee"],
             marker_color=P["gold"],
-            text=cs["AvgFee"].apply(lambda x:f"${x:,.0f}"),
-            textposition="outside",
-            textfont=dict(color=P["sub"],size=9),
             name="Fee"),row=2,col=1)
         L(fig4,520,show_legend=False)
         for a in fig4.layout.annotations:
@@ -696,8 +685,6 @@ elif page == "📋  Residency Permit":
         dow.columns = ["Day","Count"]
         fig5 = go.Figure(go.Bar(
             x=dow["Day"],y=dow["Count"],
-            text=dow["Count"],textposition="outside",
-            textfont=dict(color=P["sub"],size=9),
             marker_color=[P["red"] if d=="Tuesday"
                           else P["steel"] for d in dow["Day"]]))
         L(fig5,320,show_legend=False)
@@ -739,10 +726,73 @@ elif page == "📋  Residency Permit":
             "That is $1.23M in revenue collected but undelivered — a critical backlog "
             "concentrated in June–July 2026.")
 
+    st.markdown("")
+    sec("Revenue by Role — Top 10 Roles")
+    role_rev = fdf3.groupby("Role", dropna=False)["Amount ($)"].agg(
+        ["sum","count","mean"]).sort_values("sum", ascending=False).head(10).reset_index()
+    role_rev.columns = ["Role","Total Revenue","Count","Avg Fee"]
+    role_rev["Role"] = role_rev["Role"].fillna("Unknown")
+
+    cr1, cr2 = st.columns(2)
+    with cr1:
+        fig_rv = go.Figure(go.Bar(
+            x=role_rev["Total Revenue"],
+            y=role_rev["Role"],
+            orientation="h",
+            marker_color=P["steel"],
+            opacity=0.9))
+        fig_rv.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            height=400,
+            font=dict(family="Inter",color=P["sub"],size=11),
+            margin=dict(l=0,r=0,t=28,b=0),
+            showlegend=False)
+        fig_rv.update_xaxes(tickformat="$,.0f",
+                            title_text="Total Revenue ($)",
+                            gridcolor=P["border"],
+                            tickfont=dict(color=P["sub"]))
+        fig_rv.update_yaxes(categoryorder="total ascending",
+                            gridcolor=P["border"],
+                            tickfont=dict(color=P["sub"]))
+        st.plotly_chart(fig_rv, use_container_width=True)
+        ins("General Merchandise is the top revenue-generating role. "
+            "Mining and Construction follow — reflecting Sierra Leone's "
+            "extractive and development sector foreign workforce.")
+
+    with cr2:
+        fig_rf = go.Figure(go.Bar(
+            x=role_rev["Role"],
+            y=role_rev["Avg Fee"],
+            marker_color=[P["teal"] if v > role_rev["Avg Fee"].mean()
+                          else P["gold"]
+                          for v in role_rev["Avg Fee"]],
+            opacity=0.9))
+        fig_rf.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            height=400,
+            font=dict(family="Inter",color=P["sub"],size=11),
+            margin=dict(l=0,r=0,t=28,b=0),
+            showlegend=False)
+        fig_rf.update_xaxes(tickangle=-35,
+                            title_text="Role",
+                            gridcolor=P["border"],
+                            tickfont=dict(color=P["sub"]))
+        fig_rf.update_yaxes(tickformat="$,.0f",
+                            title_text="Average Fee ($)",
+                            gridcolor=P["border"],
+                            tickfont=dict(color=P["sub"]))
+        st.plotly_chart(fig_rf, use_container_width=True)
+        fnd("Casino and Banking roles carry the highest average fees. "
+            "Domestic Staff and Dependants carry the lowest — "
+            "consistent with their lower-risk Category D classification.")
+
+
 # ════════════════════════════════════════════════════════════
 # PAGE: PROCESS PERFORMANCE
 # ════════════════════════════════════════════════════════════
-elif page == "⚙️  Process Performance":
+elif page == "⚙️ Process Performance":
     sec("M/M/s Capacity Check")
     pc1,pc2,pc3 = st.columns(3)
     with pc1:
@@ -853,7 +903,7 @@ elif page == "⚙️  Process Performance":
 # ════════════════════════════════════════════════════════════
 # PAGE: REVENUE FORECAST
 # ════════════════════════════════════════════════════════════
-elif page == "💰  Revenue Forecast":
+elif page == "💰 Revenue Forecast":
     c1,c2 = st.columns(2)
     with c1:
         sec("Residency Permit — OLS Forecast (Sep–Dec 2026)")
@@ -981,7 +1031,7 @@ elif page == "💰  Revenue Forecast":
 # ════════════════════════════════════════════════════════════
 # PAGE: PREDICTIVE ANALYTICS
 # ════════════════════════════════════════════════════════════
-elif page == "🔮  Predictive Analytics":
+elif page == "🔮 Predictive Analytics":
     st.markdown(
         f"<p style='font-size:0.85rem;color:{P['sub']};'>"
         "Trained logistic regression model "
