@@ -1,0 +1,38 @@
+{
+  "numerical_features": [
+    "Amount ($)",
+    "Month_Num",
+    "DOW_Num",
+    "Days_to_Expiry",
+    "Card_Issued"
+  ],
+  "categorical_features": [
+    "Category",
+    "Process Code"
+  ],
+  "feature_order": [
+    "Amount ($)",
+    "Month_Num",
+    "DOW_Num",
+    "Days_to_Expiry",
+    "Card_Issued",
+    "Category_Enc",
+    "Process_Code_Enc"
+  ],
+  "categories": [
+    "Category A",
+    "Category B",
+    "Category C",
+    "Category D",
+    "Category E"
+  ],
+  "process_codes": [
+    "Blue Resident To Biomatric",
+    "Diplomatic Resident",
+    "On Spot",
+    "Resident Permit"
+  ],
+  "amount_min": 0.0,
+  "amount_max": 1000.0,
+  "amount_mean": 561.6567728008635
+}
