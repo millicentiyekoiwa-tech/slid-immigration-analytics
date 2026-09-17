@@ -3,7 +3,7 @@ SLID — Combined Immigration Services Dashboard
 Digitalization and Process Optimization of Immigration Services in Sierra Leone
 Author: Millicent Iye Koiwa | MSc Business Analytics | AUB | 2026
 """
- 
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -16,7 +16,7 @@ import statsmodels.api as sm
 from math import factorial
 import warnings
 warnings.filterwarnings("ignore")
- 
+
 # ═══════════════════════════════════════════════════════════
 # PAGE CONFIG
 # ═══════════════════════════════════════════════════════════
@@ -26,7 +26,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
- 
+
 # ═══════════════════════════════════════════════════════════
 # COLOUR PALETTE — Professional, non-AI
 # ═══════════════════════════════════════════════════════════
@@ -46,20 +46,20 @@ C = {
     "text"         : "#F1FAEE",
     "subtext"      : "#A8C5D8",
 }
- 
+
 # ═══════════════════════════════════════════════════════════
 # GLOBAL CSS
 # ═══════════════════════════════════════════════════════════
 st.markdown(f"""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
- 
+
   html, body, [class*="css"] {{
       font-family: 'Inter', sans-serif;
       background-color: {C['bg']};
       color: {C['text']};
   }}
- 
+
   /* ── Login ── */
   .login-wrap {{
       max-width: 420px; margin: 6rem auto;
@@ -72,7 +72,7 @@ st.markdown(f"""
                   color:{C['text']}; margin-bottom:0.25rem; }}
   .login-sub {{ text-align:center; font-size:0.82rem; color:{C['subtext']};
                 margin-bottom:1.8rem; }}
- 
+
   /* ── Header ── */
   .dash-header {{
       background: linear-gradient(135deg, {C['dark']} 0%, {C['primary']} 100%);
@@ -85,7 +85,7 @@ st.markdown(f"""
                      font-weight:700; margin:0; }}
   .dash-header p  {{ color:{C['subtext']}; font-size:0.82rem;
                      margin:0.2rem 0 0 0; }}
- 
+
   /* ── Tabs ── */
   .stTabs [data-baseweb="tab-list"] {{
       gap: 4px; background: {C['card']};
@@ -102,7 +102,7 @@ st.markdown(f"""
       background: {C['primary']} !important;
       color: {C['text']} !important;
   }}
- 
+
   /* ── KPI cards ── */
   .kpi {{
       background: {C['card']}; border-radius: 12px;
@@ -121,7 +121,7 @@ st.markdown(f"""
                margin: 0.3rem 0 0 0; font-weight: 500;
                text-transform: uppercase; letter-spacing: 0.05em; }}
   .kpi-delta {{ font-size: 0.75rem; margin: 0.2rem 0 0 0; }}
- 
+
   /* ── Filter bar ── */
   .filter-bar {{
       background: {C['card']}; border-radius: 10px;
@@ -132,13 +132,13 @@ st.markdown(f"""
   .filter-label {{ font-size:0.78rem; color:{C['subtext']};
                    font-weight:600; text-transform:uppercase;
                    letter-spacing:0.05em; white-space:nowrap; }}
- 
+
   /* ── Section headers ── */
   .sec {{ font-size:0.9rem; font-weight:600; color:{C['subtext']};
           text-transform:uppercase; letter-spacing:0.07em;
           border-bottom:1px solid {C['border']}; padding-bottom:0.4rem;
           margin-bottom:0.9rem; }}
- 
+
   /* ── Insight / warning boxes ── */
   .insight {{
       background: rgba(42,157,143,0.12); border-left:3px solid {C['success']};
@@ -158,7 +158,7 @@ st.markdown(f"""
       font-size:0.82rem; color:{C['warning']};
       margin: 0.5rem 0;
   }}
- 
+
   /* ── Prediction boxes ── */
   .pred-green {{
       background:rgba(42,157,143,0.15); border:1.5px solid {C['success']};
@@ -172,7 +172,7 @@ st.markdown(f"""
       background:rgba(230,57,70,0.15); border:1.5px solid {C['highlight']};
       border-radius:12px; padding:1.2rem; text-align:center;
   }}
- 
+
   /* ── Streamlit overrides ── */
   .stSelectbox>div>div, .stMultiSelect>div>div,
   .stNumberInput>div>div, .stSlider>div {{
@@ -195,12 +195,12 @@ st.markdown(f"""
   .stDataFrame {{ background: {C['card']}; }}
 </style>
 """, unsafe_allow_html=True)
- 
+
 # ═══════════════════════════════════════════════════════════
 # AUTH
 # ═══════════════════════════════════════════════════════════
 CREDENTIALS = {"SLID": "SLID2026"}
- 
+
 def login():
     st.markdown(f"""
     <div class="login-wrap">
@@ -209,7 +209,7 @@ def login():
       <div class="login-sub">Sierra Leone Immigration Department<br>
            Authorized Access Only</div>
     </div>""", unsafe_allow_html=True)
- 
+
     col_l, col_c, col_r = st.columns([1,2,1])
     with col_c:
         with st.form("login_form"):
@@ -232,14 +232,14 @@ def login():
             f'Digitalization & Process Optimization Initiative<br>'
             f'MSc Business Analytics — AUB 2026</p>',
             unsafe_allow_html=True)
- 
+
 if "auth" not in st.session_state:
     st.session_state["auth"] = False
- 
+
 if not st.session_state["auth"]:
     login()
     st.stop()
- 
+
 # ═══════════════════════════════════════════════════════════
 # PLOTLY THEME
 # ═══════════════════════════════════════════════════════════
@@ -248,21 +248,24 @@ LAYOUT = dict(
     plot_bgcolor ="rgba(0,0,0,0)",
     font=dict(family="Inter", color=C["subtext"], size=12),
     margin=dict(l=0, r=0, t=30, b=0),
-    xaxis=dict(gridcolor=C["border"], linecolor=C["border"],
-               tickfont=dict(color=C["subtext"])),
-    yaxis=dict(gridcolor=C["border"], linecolor=C["border"],
-               tickfont=dict(color=C["subtext"])),
     legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(color=C["subtext"])),
-    coloraxis_colorbar=dict(tickfont=dict(color=C["subtext"])),
 )
+
+def ax(fig):
+    """Apply consistent axis styling."""
+    fig.update_xaxes(gridcolor=C["border"], linecolor=C["border"],
+                     tickfont=dict(color=C["subtext"]))
+    fig.update_yaxes(gridcolor=C["border"], linecolor=C["border"],
+                     tickfont=dict(color=C["subtext"]))
+    return fig
 PALETTE = [C["secondary"], C["success"], C["warning"],
            C["highlight"], C["accent"], "#8ECAE6",
            "#FB8500", "#023047", "#219EBC"]
- 
+
 def apply_theme(fig, h=400):
     fig.update_layout(**LAYOUT, height=h)
     return fig
- 
+
 # ═══════════════════════════════════════════════════════════
 # HELPERS
 # ═══════════════════════════════════════════════════════════
@@ -277,22 +280,22 @@ def kpi(label, value, color="", delta=None):
       <p class="kpi-lbl">{label}</p>
       {delta_html}
     </div>""", unsafe_allow_html=True)
- 
+
 def sec(title):
     st.markdown(f'<p class="sec">{title}</p>', unsafe_allow_html=True)
- 
+
 def insight(txt):
     st.markdown(f'<div class="insight">💡 {txt}</div>',
                 unsafe_allow_html=True)
- 
+
 def warn(txt):
     st.markdown(f'<div class="warn">⚠ {txt}</div>',
                 unsafe_allow_html=True)
- 
+
 def finding(txt):
     st.markdown(f'<div class="finding">📌 {txt}</div>',
                 unsafe_allow_html=True)
- 
+
 def mms(lam, mu, s):
     rho = lam / (s * mu)
     if rho >= 1:
@@ -305,7 +308,7 @@ def mms(lam, mu, s):
     W     = Wq+1/mu
     return {"rho":round(rho,4),"stable":True,
             "W":round(W,4),"Lq":round(Lq,4)}
- 
+
 # ═══════════════════════════════════════════════════════════
 # DATA
 # ═══════════════════════════════════════════════════════════
@@ -338,7 +341,7 @@ def load_rp():
                 19:"Needs Edit"}
         df["Status_Name"] = df["Status"].map(smap).fillna("Other")
     return df
- 
+
 @st.cache_resource
 def load_models():
     try:
@@ -355,7 +358,7 @@ def load_models():
         return lr,sc,lec,lep,km,ks,meta,ols_p,True
     except:
         return None,None,None,None,None,None,{},{},False
- 
+
 @st.cache_data
 def load_pp():
     pp = pd.DataFrame({
@@ -380,11 +383,11 @@ def load_pp():
         "Lon"   :[-13.234,-12.059,-11.190,-13.234,-11.738],
     })
     return pp, office
- 
+
 df = load_rp()
 pp, office = load_pp()
 lr_model,scaler,le_cat,le_proc,km_model,kscaler,meta,ols_p,models_ok = load_models()
- 
+
 # ═══════════════════════════════════════════════════════════
 # HEADER + LOGOUT
 # ═══════════════════════════════════════════════════════════
@@ -403,7 +406,7 @@ with hc2:
     if st.button("Sign Out"):
         st.session_state["auth"] = False
         st.rerun()
- 
+
 # ═══════════════════════════════════════════════════════════
 # TABS
 # ═══════════════════════════════════════════════════════════
@@ -415,7 +418,7 @@ tabs = st.tabs([
     "💰  Revenue Forecast",
     "🔮  Predictive Analytics",
 ])
- 
+
 # ──────────────────────────────────────────────────────────
 # TAB 1 — OVERVIEW
 # ──────────────────────────────────────────────────────────
@@ -431,10 +434,10 @@ with tabs[0]:
             pp_months = pp["Month"].tolist()
             sel_pp = st.multiselect("Passport Month",
                 pp_months, default=pp_months, key="ov_pp")
- 
+
     fdf = df[df["Month"].isin(sel_months)]
     fpp = pp[pp["Month"].isin(sel_pp)]
- 
+
     # KPIs
     k1,k2,k3,k4,k5,k6 = st.columns(6)
     with k1: kpi("Passports Produced", f"{fpp['Total'].sum():,}", "teal")
@@ -450,10 +453,10 @@ with tabs[0]:
     with k6:
         tot = fpp["Revenue"].sum()+fdf["Amount ($)"].sum()
         kpi("Combined Revenue", f"${tot/1e6:.2f}M", "green")
- 
+
     st.markdown("<br>", unsafe_allow_html=True)
     c1,c2 = st.columns(2)
- 
+
     with c1:
         sec("Monthly Volume — Passport vs Residency Permit")
         rp_m = fdf.groupby("Month").size().reset_index(name="Apps")
@@ -478,9 +481,10 @@ with tabs[0]:
                          title_font=dict(color=C["subtext"]))
         fig.update_yaxes(title_text="Volume",
                          title_font=dict(color=C["subtext"]))
+        ax(fig)
         st.plotly_chart(fig, use_container_width=True)
         insight("Passport volumes are 5–10× higher than permit applications, reflecting Sierra Leone's broader citizen travel demand versus foreign national residency.")
- 
+
     with c2:
         sec("Monthly Revenue — Passport vs Residency Permit")
         rp_rev = fdf.groupby("Month")["Amount ($)"].sum().reset_index()
@@ -508,12 +512,13 @@ with tabs[0]:
                           title_font=dict(color=C["subtext"]))
         fig2.update_xaxes(title_text="Month",
                           title_font=dict(color=C["subtext"]))
+        ax(fig2)
         st.plotly_chart(fig2, use_container_width=True)
         insight("Passport revenue dominates month-on-month due to volume. Residency permit revenue shows a stronger growth trajectory through June 2026.")
- 
+
     st.markdown("<br>", unsafe_allow_html=True)
     c3,c4 = st.columns(2)
- 
+
     with c3:
         sec("Revenue Split — Passport vs Residency Permit")
         fig3 = go.Figure(go.Pie(
@@ -525,8 +530,9 @@ with tabs[0]:
             textfont=dict(color="white",size=12),
         ))
         fig3.update_layout(**LAYOUT,height=320,showlegend=False)
+        ax(fig3)
         st.plotly_chart(fig3, use_container_width=True)
- 
+
     with c4:
         sec("Service Delivery Scorecard")
         scorecard = pd.DataFrame({
@@ -540,7 +546,7 @@ with tabs[0]:
         st.dataframe(scorecard, use_container_width=True,
                      hide_index=True)
         warn("Three of five service delivery metrics are off-target. Online adoption and geographic decentralisation are the most urgent gaps.")
- 
+
 # ──────────────────────────────────────────────────────────
 # TAB 2 — PASSPORT
 # ──────────────────────────────────────────────────────────
@@ -550,17 +556,17 @@ with tabs[1]:
         sel_pp2 = st.multiselect("Passport Month", pp_months_all,
                                  default=pp_months_all, key="pp_m2")
     fpp2 = pp[pp["Month"].isin(sel_pp2)]
- 
+
     k1,k2,k3,k4,k5 = st.columns(5)
     with k1: kpi("Total Produced",f"{fpp2['Total'].sum():,}","teal")
     with k2: kpi("Ordinary",f"{fpp2['Ordinary'].sum():,}","")
     with k3: kpi("Service",f"{fpp2['Service'].sum():,}","gold")
     with k4: kpi("Diplomatic (Exempt)",f"{fpp2['Diplomatic'].sum():,}","")
     with k5: kpi("Est. Revenue",f"${fpp2['Revenue'].sum():,.0f}","green")
- 
+
     st.markdown("<br>", unsafe_allow_html=True)
     c1,c2 = st.columns(2)
- 
+
     with c1:
         sec("Monthly Production Trend by Passport Type")
         fig = go.Figure()
@@ -578,9 +584,10 @@ with tabs[1]:
                         font=dict(color=C["subtext"])))
         fig.update_yaxes(title_text="Passports Produced",
                          title_font=dict(color=C["subtext"]))
+        ax(fig)
         st.plotly_chart(fig, use_container_width=True)
         warn("Service passport production collapsed 96% between March (108) and May (7). This anomaly is unexplained and requires investigation with SLID.")
- 
+
     with c2:
         sec("Passport Type — Volume & Revenue Share")
         td = pd.DataFrame({
@@ -606,11 +613,12 @@ with tabs[1]:
         fig2.update_layout(**LAYOUT,height=380,showlegend=False)
         for ann in fig2.layout.annotations:
             ann.font.color = C["subtext"]
+        ax(fig2)
         st.plotly_chart(fig2, use_container_width=True)
- 
+
     st.markdown("<br>", unsafe_allow_html=True)
     c3,c4 = st.columns(2)
- 
+
     with c3:
         sec("Month-over-Month Production Change")
         mom = fpp2.dropna(subset=["MoM"]).copy()
@@ -626,9 +634,10 @@ with tabs[1]:
         fig3.update_layout(**LAYOUT,height=340,showlegend=False)
         fig3.update_yaxes(title_text="Change in Volume",
                           title_font=dict(color=C["subtext"]))
+        ax(fig3)
         st.plotly_chart(fig3, use_container_width=True)
         insight(f"Highest single-month gain: July (+{int(pp['MoM'].max()):,}). Steepest decline: May ({int(pp['MoM'].min()):,}). No consistent trend — demand is highly variable.")
- 
+
     with c4:
         sec("Daily Production Rate by Month")
         fig4 = go.Figure(go.Scatter(
@@ -647,12 +656,13 @@ with tabs[1]:
         fig4.update_layout(**LAYOUT,height=340)
         fig4.update_yaxes(title_text="Passports per Working Day",
                           title_font=dict(color=C["subtext"]))
+        ax(fig4)
         st.plotly_chart(fig4, use_container_width=True)
- 
+
     st.markdown("<br>", unsafe_allow_html=True)
     sec("Geographic Distribution of Passport Production — Sierra Leone")
     cm1,cm2 = st.columns([3,2])
- 
+
     with cm1:
         fig5 = px.scatter_geo(
             office, lat="Lat", lon="Lon",
@@ -675,11 +685,17 @@ with tabs[1]:
             lataxis_range=[6.5,10.5],
             lonaxis_range=[-14.5,-10.0],
         )
-        fig5.update_layout(**LAYOUT, height=420,
-                           paper_bgcolor="rgba(0,0,0,0)",
-                           geo_bgcolor="rgba(0,0,0,0)")
+        fig5.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(family="Inter", color=C["subtext"], size=12),
+            margin=dict(l=0, r=0, t=30, b=0),
+            legend=dict(bgcolor="rgba(0,0,0,0)",
+                        font=dict(color=C["subtext"])),
+            height=420,
+            geo_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig5, use_container_width=True)
- 
+
     with cm2:
         sec("Production by Office")
         fig6 = go.Figure(go.Bar(
@@ -694,10 +710,11 @@ with tabs[1]:
         fig6.update_layout(**LAYOUT,height=320,showlegend=False)
         fig6.update_xaxes(title_text="Passports Produced",
                           title_font=dict(color=C["subtext"]))
+        ax(fig6)
         st.plotly_chart(fig6, use_container_width=True)
         warn("Freetown handles 98.18% of all production — a critical single point of failure. Any disruption in Freetown halts the entire national passport system.")
         finding("Online channel: only 130 passports (0.33%) despite the digitalization mandate — indicating negligible digital adoption.")
- 
+
 # ──────────────────────────────────────────────────────────
 # TAB 3 — RESIDENCY PERMIT
 # ──────────────────────────────────────────────────────────
@@ -711,11 +728,11 @@ with tabs[2]:
         with rc2:
             all_c3 = ["All"]+sorted(df["Category"].dropna().unique())
             sel_c3 = st.selectbox("Category", all_c3, key="rp_c3")
- 
+
     fdf3 = df[df["Month"].isin(sel_m3)]
     if sel_c3 != "All":
         fdf3 = fdf3[fdf3["Category"]==sel_c3]
- 
+
     k1,k2,k3,k4,k5 = st.columns(5)
     with k1: kpi("Total Applications",f"{len(fdf3):,}","")
     with k2:
@@ -729,10 +746,10 @@ with tabs[2]:
                  f"${fdf3['Amount ($)'].sum():,.0f}","gold")
     with k5: kpi("Average Fee",
                  f"${fdf3['Amount ($)'].mean():,.0f}","")
- 
+
     st.markdown("<br>", unsafe_allow_html=True)
     c1,c2 = st.columns(2)
- 
+
     with c1:
         sec("Monthly Volume & Revenue (Dual Axis)")
         m3 = fdf3.groupby("Month").agg(
@@ -762,9 +779,10 @@ with tabs[2]:
             tickformat="$,.0f",
             title_font=dict(color=C["subtext"]),secondary_y=True,
             gridcolor="rgba(0,0,0,0)")
+        ax(fig)
         st.plotly_chart(fig, use_container_width=True)
         insight("June 2026 was peak month for both volume (2,634 applications) and revenue ($1.49M) — driven by annual permit renewals concentrated in Q2.")
- 
+
     with c2:
         sec("Application Status Distribution")
         sd = fdf3["Status_Name"].value_counts().reset_index()
@@ -780,11 +798,12 @@ with tabs[2]:
         fig2.update_layout(**LAYOUT,height=380,showlegend=False)
         fig2.update_xaxes(title_text="Count",
                           title_font=dict(color=C["subtext"]))
+        ax(fig2)
         st.plotly_chart(fig2, use_container_width=True)
- 
+
     st.markdown("<br>", unsafe_allow_html=True)
     c3,c4 = st.columns(2)
- 
+
     with c3:
         sec("Applications & Revenue by Category")
         cs = fdf3.groupby("Category",dropna=False).agg(
@@ -794,7 +813,7 @@ with tabs[2]:
             DR=("Completion_Binary","mean")).reset_index()
         cs["Category"] = cs["Category"].fillna("Unknown")
         cs["DR"] = (cs["DR"]*100).round(1)
- 
+
         fig3 = make_subplots(2,1,
             subplot_titles=["Applications by Category",
                             "Revenue by Category ($)"],
@@ -815,8 +834,9 @@ with tabs[2]:
         fig3.update_layout(**LAYOUT,height=560,showlegend=False)
         for ann in fig3.layout.annotations:
             ann.font.color = C["subtext"]
+        ax(fig3)
         st.plotly_chart(fig3, use_container_width=True)
- 
+
     with c4:
         sec("Delivery Rate & Average Fee by Category")
         fig4 = make_subplots(2,1,
@@ -847,12 +867,13 @@ with tabs[2]:
         fig4.update_layout(**LAYOUT,height=560,showlegend=False)
         for ann in fig4.layout.annotations:
             ann.font.color = C["subtext"]
+        ax(fig4)
         st.plotly_chart(fig4, use_container_width=True)
         insight("Category B (General Merchandise) generates the highest total revenue and has the highest average fee at $709. Category D (Dependants) has the lowest at $213.")
- 
+
     st.markdown("<br>", unsafe_allow_html=True)
     c5,c6 = st.columns(2)
- 
+
     with c5:
         sec("Applications by Day of Week")
         day_order=["Monday","Tuesday","Wednesday",
@@ -871,7 +892,7 @@ with tabs[2]:
                           title_font=dict(color=C["subtext"]))
         st.plotly_chart(fig5, use_container_width=True)
         insight("Monday is the busiest day. Tuesday shows an unexpectedly low volume — a potential data anomaly worth raising with SLID.")
- 
+
     with c6:
         sec("Applicant Segments — K-Means Cluster Analysis")
         cl = pd.DataFrame({
@@ -903,9 +924,10 @@ with tabs[2]:
                           title_font=dict(color=C["subtext"]))
         fig6.update_yaxes(title_text="Delivery Rate (%)",
                           title_font=dict(color=C["subtext"]))
+        ax(fig6)
         st.plotly_chart(fig6, use_container_width=True)
         warn("Cluster 2 — 1,649 high-fee applications ($744 avg) with 0% delivery. These applicants paid in full but their permits were never issued. This represents $1.23M in revenue collected but undelivered — a critical operational backlog concentrated in June and July 2026.")
- 
+
 # ──────────────────────────────────────────────────────────
 # TAB 4 — PROCESS PERFORMANCE
 # ──────────────────────────────────────────────────────────
@@ -921,7 +943,7 @@ with tabs[3]:
     with pc3:
         mu_in = st.number_input("Applications/officer/day (μ)",1,50,5,1,
                                 key="pp_mu")
- 
+
     m = mms(lam, mu_in, s_in)
     if m["stable"]:
         st.markdown(f"""
@@ -945,10 +967,10 @@ with tabs[3]:
           Add at least <b>{extra} more officer(s)</b>
           or defer {lam-cap:.0f} applications.</p>
         </div>""", unsafe_allow_html=True)
- 
+
     st.markdown("<br>", unsafe_allow_html=True)
     c1,c2 = st.columns(2)
- 
+
     with c1:
         sec("AS-IS vs TO-BE Processing Time Across All Demand Scenarios")
         demands = {"Jan\n(Low)":11.62,"Feb":37.96,"Mar":37.93,
@@ -988,9 +1010,10 @@ with tabs[3]:
                          range=[0,6])
         fig.update_xaxes(title_text="Month",
                          title_font=dict(color=C["subtext"]))
+        ax(fig)
         st.plotly_chart(fig, use_container_width=True)
         insight("The recommended configuration (s=8, μ=12) remains stable across all demand scenarios including the June peak of 87.80 applications per day — the only configuration that achieves this.")
- 
+
     with c2:
         sec(f"Sensitivity Analysis — Processing Time (days) | λ={lam}/day")
         server_range=list(range(3,14))
@@ -1011,8 +1034,9 @@ with tabs[3]:
         fig2.update_coloraxes(
             colorbar_tickfont_color=C["subtext"],
             colorbar_title_font_color=C["subtext"])
+        ax(fig2)
         st.plotly_chart(fig2, use_container_width=True)
- 
+
     st.markdown("<br>", unsafe_allow_html=True)
     sec("Configuration Summary")
     rows=[]
@@ -1028,13 +1052,13 @@ with tabs[3]:
     st.dataframe(pd.DataFrame(rows),
                  use_container_width=True,hide_index=True)
     finding("The primary lever for improvement is not headcount alone — it is service rate (μ). Digitising identity verification (NCRA API integration) is the single highest-impact technical intervention available to SLID.")
- 
+
 # ──────────────────────────────────────────────────────────
 # TAB 5 — REVENUE FORECAST
 # ──────────────────────────────────────────────────────────
 with tabs[4]:
     c1,c2 = st.columns(2)
- 
+
     with c1:
         sec("Residency Permit — OLS Linear Trend Forecast (Sep–Dec 2026)")
         rm = df.groupby("Month")["Amount ($)"].sum().reset_index()
@@ -1051,7 +1075,7 @@ with tabs[4]:
         fut["Forecast"] = pred["mean"].values
         fut["Lo95"]     = pred["obs_ci_lower"].values
         fut["Hi95"]     = pred["obs_ci_upper"].values
- 
+
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=rm["Month"],y=rm["Revenue"],
@@ -1084,10 +1108,11 @@ with tabs[4]:
                          title_font=dict(color=C["subtext"]))
         fig.update_xaxes(title_text="Month",
                          title_font=dict(color=C["subtext"]))
+        ax(fig)
         st.plotly_chart(fig, use_container_width=True)
         st.caption(f"R²={ols.rsquared:.3f} | Monthly trend coefficient: "
                    f"${ols.params['MI']:,.0f} | Fitted on Jan–Jul 2026 (n=7)")
- 
+
     with c2:
         sec("Passport — Scenario-Based Projection (Aug–Dec 2026)")
         pf_months=["2026-08","2026-09","2026-10","2026-11","2026-12"]
@@ -1129,9 +1154,10 @@ with tabs[4]:
                           title_font=dict(color=C["subtext"]))
         fig2.update_xaxes(title_text="Month",
                           title_font=dict(color=C["subtext"]))
+        ax(fig2)
         st.plotly_chart(fig2, use_container_width=True)
         st.caption("Scenario-based — no OLS applied. No consistent linear trend in passport production data.")
- 
+
     st.markdown("<br>", unsafe_allow_html=True)
     sec("2026 Combined Revenue Projection — Three Scenarios")
     pp_act = pp["Revenue"].sum()
@@ -1177,8 +1203,9 @@ with tabs[4]:
                       title_font=dict(color=C["subtext"]))
     fig3.update_xaxes(title_text="Scenario",
                       title_font=dict(color=C["subtext"]))
+    ax(fig3)
     st.plotly_chart(fig3, use_container_width=True)
- 
+
     rows2=[]
     for sc,(pp_proj,rp_proj) in scens.items():
         rows2.append({
@@ -1190,7 +1217,7 @@ with tabs[4]:
     st.dataframe(pd.DataFrame(rows2),
                  use_container_width=True,hide_index=True)
     st.caption("Passport revenue: $100/passport (Ordinary + Service). Diplomatic passports fee-exempt. Source: SLID official fee schedule.")
- 
+
 # ──────────────────────────────────────────────────────────
 # TAB 6 — PREDICTIVE ANALYTICS
 # ──────────────────────────────────────────────────────────
@@ -1202,14 +1229,14 @@ with tabs[5]:
     to predict whether a residency permit application is likely to be
     delivered based on its characteristics at the point of submission.</p>
     """, unsafe_allow_html=True)
- 
+
     if not models_ok:
         st.error("Model files not found. Ensure all .joblib files "
                  "are in the same folder as the dashboard.")
         st.stop()
- 
+
     pc1,pc2 = st.columns([1,1])
- 
+
     with pc1:
         sec("Application Input")
         cat_in  = st.selectbox("Permit Category",
@@ -1234,7 +1261,7 @@ with tabs[5]:
             ["Yes","No"],horizontal=True,key="pred_card")
         predict = st.button("🔮  Predict Application Outcome",
                             use_container_width=True)
- 
+
     with pc2:
         sec("Prediction Result")
         if predict:
@@ -1250,7 +1277,7 @@ with tabs[5]:
                                   cat_enc,proc_enc]])
                 X_sc = scaler.transform(X_in)
                 p_del = lr_model.predict_proba(X_sc)[0][1]
- 
+
                 if p_del>=0.75:
                     css,icon,verdict,action = (
                         "pred-green","🟢",
@@ -1266,7 +1293,7 @@ with tabs[5]:
                         "pred-red","🔴",
                         "HIGH RISK — Application Likely to Stall",
                         "Escalate immediately. Conduct priority identity verification. Assign for manual review.")
- 
+
                 st.markdown(f"""
                 <div class="{css}">
                   <h2>{icon} {verdict}</h2>
@@ -1277,9 +1304,9 @@ with tabs[5]:
                     <b>Recommended Action:</b> {action}
                   </p>
                 </div>""", unsafe_allow_html=True)
- 
+
                 st.markdown("<br>", unsafe_allow_html=True)
- 
+
                 # Gauge
                 fig_g = go.Figure(go.Indicator(
                     mode="gauge+number",
@@ -1311,8 +1338,9 @@ with tabs[5]:
                     font=dict(color=C["subtext"],family="Inter"),
                     height=280,
                     margin=dict(l=20,r=20,t=40,b=20))
+                ax(fig_g)
                 st.plotly_chart(fig_g, use_container_width=True)
- 
+
                 # Feature importance
                 sec("Feature Influence on Prediction")
                 coef_df = pd.DataFrame({
@@ -1321,7 +1349,7 @@ with tabs[5]:
                                "Category","Process Code"],
                     "Coefficient":lr_model.coef_[0]
                 }).sort_values("Coefficient")
- 
+
                 fig_c = go.Figure(go.Bar(
                     x=coef_df["Coefficient"],
                     y=coef_df["Feature"],
@@ -1333,11 +1361,12 @@ with tabs[5]:
                 fig_c.update_xaxes(
                     title_text="Coefficient (positive = increases delivery probability)",
                     title_font=dict(color=C["subtext"]))
+                ax(fig_c)
                 st.plotly_chart(fig_c, use_container_width=True)
- 
+
             except Exception as e:
                 st.error(f"Prediction error: {e}")
- 
+
         else:
             st.info("Complete the application details on the left "
                     "and click **Predict Application Outcome**.")
@@ -1353,7 +1382,7 @@ with tabs[5]:
             })
             st.dataframe(perf,use_container_width=True,
                          hide_index=True)
- 
+
             st.markdown("<br>", unsafe_allow_html=True)
             sec("Applicant Segments — K-Means Cluster Profiles")
             cl_df = pd.DataFrame({
@@ -1373,4 +1402,3 @@ with tabs[5]:
             st.dataframe(cl_df,use_container_width=True,
                          hide_index=True)
             warn("Cluster 2 is the most operationally critical finding: 1,649 applicants paid a full average fee of $744 but received no permit. This $1.23M backlog represents a direct reputational and compliance risk for SLID — not an analytical artefact.")
- 
