@@ -235,8 +235,9 @@ def load_models(_df):
         data["Proc_Enc"] = le_proc.fit_transform(data["Process Code"])
 
         features = ["Amount ($)","Month_Num","DOW_Num",
-                    "Days_to_Expiry","Card_Issued",
                     "Cat_Enc","Proc_Enc"]
+        # Drop post-processing columns that cause data leakage
+        # Card_Issued and Days_to_Expiry are outcomes, not inputs
         for col in features:
             if col not in data.columns:
                 data[col] = 0
@@ -1138,10 +1139,6 @@ elif page == "Predictive Analytics":
         dow_in  = st.selectbox("Day of Week",
             ["Monday","Tuesday","Wednesday",
              "Thursday","Friday","Saturday"], key="pdow")
-        exp_in  = st.slider("Expected Permit Duration (days)",
-                            30, 400, 364, 1, key="pexp")
-        card_in = st.radio("Card Number Assigned?",
-                           ["Yes","No"], horizontal=True, key="pcard")
         go_btn  = st.button("Predict Outcome",
                             use_container_width=True)
 
@@ -1159,9 +1156,8 @@ elif page == "Predictive Analytics":
                     pe = lp_.transform([prc_in])[0]
                 except Exception:
                     pe = 0
-                cv  = 1 if card_in=="Yes" else 0
                 Xi  = np.array([[amt_in, mon_in, dm[dow_in],
-                                 exp_in, cv, ce, pe]])
+                                 ce, pe]])
                 Xs  = sc_.transform(Xi)
                 pd_ = lr_.predict_proba(Xs)[0][1]
 
@@ -1224,9 +1220,9 @@ elif page == "Predictive Analytics":
 
                 sec("Feature Influence on Prediction")
                 cdf = pd.DataFrame({
-                    "Feature":["Amount","Month","Day of Week",
-                               "Days to Expiry","Card Issued",
-                               "Category","Process Code"],
+                    "Feature":["Amount ($)","Month",
+                               "Day of Week","Category",
+                               "Process Code"],
                     "Coef": lr_.coef_[0]
                 }).sort_values("Coef")
                 fc = go.Figure(go.Bar(
