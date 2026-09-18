@@ -603,8 +603,6 @@ elif page == "Passport Analysis":
 # RESIDENCY PERMIT ANALYSIS
 # ════════════════════════════════════════════════════════════
 elif page == "Residency Permit Analysis":
-    # Filters — category filter only applies to volume/revenue/role charts
-    # Category breakdown charts always show ALL categories for comparison
     with st.expander("Filters", expanded=False):
         rc1, rc2 = st.columns(2)
         with rc1:
@@ -615,14 +613,12 @@ elif page == "Residency Permit Analysis":
             cats   = ["All"]+sorted(df["Category"].dropna().unique())
             sel_c3 = st.selectbox("Category", cats, key="rc3")
 
-    # Filtered dataset — category filter for volume/revenue/role
-    fdf3 = df[df["Month"].isin(sel_m3)]
+    fdf3     = df[df["Month"].isin(sel_m3)]
     if sel_c3 != "All":
         fdf3 = fdf3[fdf3["Category"]==sel_c3]
+    fdf3_all = df[df["Month"].isin(sel_m3)]  # always all cats
 
-    # Always use full month-filtered data for category breakdowns
-    fdf3_all = df[df["Month"].isin(sel_m3)]
-
+    # ── KPIs ─────────────────────────────────────────────
     k1,k2,k3,k4,k5 = st.columns(5)
     with k1: kpi("Total Applications", f"{len(fdf3):,}")
     with k2:
@@ -636,13 +632,14 @@ elif page == "Residency Permit Analysis":
     with k5: kpi("Average Fee",
                  f"${fdf3['Amount ($)'].mean():,.0f}")
 
-    st.markdown("")
+    st.divider()
 
     # ── ROW 1: VOLUME & STATUS ───────────────────────────
+    sec("Volume and Status")
     c1, c2 = st.columns(2)
     with c1:
         sec("Monthly Volume and Revenue")
-        m3  = fdf3.groupby("Month").agg(
+        m3 = fdf3.groupby("Month").agg(
             Apps=("Receipt Code","count"),
             Rev=("Amount ($)","sum")).reset_index()
         fig = make_subplots(specs=[[{"secondary_y":True}]])
@@ -656,18 +653,19 @@ elif page == "Residency Permit Analysis":
             line=dict(color=P["gold"],width=2.5),
             marker=dict(size=8,color=P["gold"])),
             secondary_y=True)
-        L(fig, 340, True)
+        L(fig, 360, True)
         fig.update_layout(barmode="relative")
-        fig.update_yaxes(title_text="Applications", secondary_y=False,
+        fig.update_yaxes(title_text="Applications",
+                         secondary_y=False,
                          gridcolor=P["border"],
                          tickfont=dict(color=P["sub"]))
-        fig.update_yaxes(title_text="Revenue ($)", tickformat="$,.0f",
+        fig.update_yaxes(title_text="Revenue ($)",
+                         tickformat="$,.0f",
                          secondary_y=True,
                          gridcolor="rgba(0,0,0,0)",
                          tickfont=dict(color=P["sub"]))
         st.plotly_chart(fig, use_container_width=True)
-        ins("June 2026 was the peak month for both volume (2,634) "
-            "and revenue ($1.49M), driven by annual permit renewals.")
+        ins("June 2026 was peak month — 2,634 applications and $1.49M revenue.")
 
     with c2:
         sec("Application Status Distribution")
@@ -677,92 +675,83 @@ elif page == "Residency Permit Analysis":
                  else P["red"] if s in ["Rejected","Expired"]
                  else P["steel"] for s in sd["Status"]]
         fig2 = go.Figure(go.Bar(
-            x=sd["Count"], y=sd["Status"], orientation="h",
-            marker_color=bar_c))
-        L(fig2, 340, show_legend=False)
-        fig2.update_xaxes(title_text="Count")
+            x=sd["Count"], y=sd["Status"],
+            orientation="h", marker_color=bar_c))
+        L(fig2, 360, show_legend=False)
+        fig2.update_xaxes(title_text="Count",
+                          gridcolor=P["border"],
+                          tickfont=dict(color=P["sub"]))
+        fig2.update_yaxes(tickfont=dict(color=P["sub"]))
         st.plotly_chart(fig2, use_container_width=True)
 
-    st.markdown("")
+    st.divider()
 
-    # ── ROW 2: CATEGORY ANALYSIS (always all categories) ─
-    c3, c4 = st.columns(2)
+    # ── ROW 2: CATEGORY CHARTS ───────────────────────────
+    sec("Category Analysis — All Categories (unaffected by filter)")
+    cs = fdf3_all.groupby("Category", dropna=False).agg(
+        Count=("Receipt Code","count"),
+        Revenue=("Amount ($)","sum"),
+        DR=("Completion_Binary","mean")).reset_index()
+    cs["Category"] = cs["Category"].fillna("Unknown")
+    cs["DR"] = (cs["DR"]*100).round(1)
+
+    c3, c4, c5 = st.columns(3)
     with c3:
-        sec("Applications and Revenue by Category")
-        # Always show all categories regardless of filter
-        cs = fdf3_all.groupby("Category", dropna=False).agg(
-            Count=("Receipt Code","count"),
-            Revenue=("Amount ($)","sum")).reset_index()
-        cs["Category"] = cs["Category"].fillna("Unknown")
-
-        fig3 = make_subplots(
-            rows=1, cols=2,
-            subplot_titles=["Applications","Revenue ($)"],
-            horizontal_spacing=0.12)
-        fig3.add_trace(go.Bar(
+        sec("Applications by Category")
+        fig3 = go.Figure(go.Bar(
             x=cs["Category"], y=cs["Count"],
-            marker_color=P["steel"], name="Applications",
-            showlegend=False),
-            row=1, col=1)
-        fig3.add_trace(go.Bar(
-            x=cs["Category"], y=cs["Revenue"],
-            marker_color=P["teal"], name="Revenue",
-            showlegend=False),
-            row=1, col=2)
-        L(fig3, 340, show_legend=False)
-        fig3.update_yaxes(title_text="Count", row=1, col=1,
-                          gridcolor=P["border"],
-                          tickfont=dict(color=P["sub"]))
-        fig3.update_yaxes(tickformat="$,.0f", row=1, col=2,
-                          gridcolor=P["border"],
-                          tickfont=dict(color=P["sub"]))
+            marker_color=P["steel"]))
+        L(fig3, 320, show_legend=False)
         fig3.update_xaxes(tickangle=-20,
                           tickfont=dict(color=P["sub"],size=9))
-        for a in fig3.layout.annotations:
-            a.font.color = P["sub"]
-        st.plotly_chart(fig3, use_container_width=True)
-        ins("Category B (General Merchandise) dominates both volume "
-            "and revenue. Category E (NGOs) has the highest application "
-            "count after B but lower average fees.")
-
-    with c4:
-        sec("Delivery Rate by Category")
-        cs2 = fdf3_all.groupby("Category", dropna=False).agg(
-            Count=("Receipt Code","count"),
-            DR=("Completion_Binary","mean"),
-            AvgFee=("Amount ($)","mean")).reset_index()
-        cs2["Category"] = cs2["Category"].fillna("Unknown")
-        cs2["DR"] = (cs2["DR"]*100).round(1)
-
-        fig4 = go.Figure()
-        fig4.add_trace(go.Bar(
-            x=cs2["Category"], y=cs2["DR"],
-            marker_color=[P["teal"] if v>80
-                          else P["gold"] if v>60
-                          else P["red"] for v in cs2["DR"]],
-            name="Delivery Rate"))
-        fig4.add_hline(y=74.7, line_dash="dash",
-                       line_color=P["gold"],
-                       annotation_text="74.7% overall avg",
-                       annotation_font_color=P["gold"])
-        L(fig4, 340, show_legend=False)
-        fig4.update_yaxes(title_text="Delivery Rate (%)",
-                          range=[0,110],
+        fig3.update_yaxes(title_text="Applications",
                           gridcolor=P["border"],
                           tickfont=dict(color=P["sub"]))
+        st.plotly_chart(fig3, use_container_width=True)
+
+    with c4:
+        sec("Revenue by Category")
+        fig4 = go.Figure(go.Bar(
+            x=cs["Category"], y=cs["Revenue"],
+            marker_color=P["teal"]))
+        L(fig4, 320, show_legend=False)
         fig4.update_xaxes(tickangle=-20,
                           tickfont=dict(color=P["sub"],size=9))
+        fig4.update_yaxes(tickformat="$,.0f",
+                          title_text="Revenue ($)",
+                          gridcolor=P["border"],
+                          tickfont=dict(color=P["sub"]))
         st.plotly_chart(fig4, use_container_width=True)
-        ins("Category B has the highest delivery rate. "
-            "Categories with lower fees (D, E) tend to have "
-            "lower delivery rates — suggesting collection "
-            "challenges for lower-priority permit holders.")
 
-    st.markdown("")
-
-    # ── ROW 3: ROLE REVENUE + CLUSTERS ───────────────────
-    c5, c6 = st.columns(2)
     with c5:
+        sec("Delivery Rate by Category")
+        dr_c = [P["teal"] if v>80 else P["gold"] if v>60
+                else P["red"] for v in cs["DR"]]
+        fig5 = go.Figure(go.Bar(
+            x=cs["Category"], y=cs["DR"],
+            marker_color=dr_c))
+        fig5.add_hline(y=74.7, line_dash="dash",
+                       line_color=P["gold"],
+                       annotation_text="74.7% avg",
+                       annotation_font_color=P["gold"])
+        L(fig5, 320, show_legend=False)
+        fig5.update_xaxes(tickangle=-20,
+                          tickfont=dict(color=P["sub"],size=9))
+        fig5.update_yaxes(title_text="Delivery Rate (%)",
+                          range=[0,115],
+                          gridcolor=P["border"],
+                          tickfont=dict(color=P["sub"]))
+        st.plotly_chart(fig5, use_container_width=True)
+        ins("Category B has the highest delivery rate and revenue. "
+            "Categories D and E have lower delivery rates.")
+
+    st.divider()
+
+    # ── ROW 3: ROLE, DAY OF WEEK, CLUSTERS ───────────────
+    sec("Operational Patterns and Segmentation")
+    c6, c7, c8 = st.columns(3)
+
+    with c6:
         sec("Revenue by Role — Top 10")
         role_rev = fdf3_all.groupby(
             "Role", dropna=False)["Amount ($)"].agg(
@@ -770,9 +759,7 @@ elif page == "Residency Permit Analysis":
             "sum", ascending=False).head(10).reset_index()
         role_rev.columns = ["Role","Total Revenue","Count"]
         role_rev["Role"] = role_rev["Role"].fillna("Unknown")
-
-        fig5 = go.Figure()
-        fig5.add_trace(go.Bar(
+        fig6 = go.Figure(go.Bar(
             x=role_rev["Total Revenue"],
             y=role_rev["Role"],
             orientation="h",
@@ -784,23 +771,42 @@ elif page == "Residency Permit Analysis":
             customdata=role_rev["Count"],
             hovertemplate=(
                 "<b>%{y}</b><br>"
-                "Total Revenue: $%{x:,.0f}<br>"
+                "Revenue: $%{x:,.0f}<br>"
                 "Applications: %{customdata:,}"
                 "<extra></extra>")))
-        L(fig5, 380, show_legend=False)
-        fig5.update_xaxes(tickformat="$,.0f",
+        L(fig6, 360, show_legend=False)
+        fig6.update_xaxes(tickformat="$,.0f",
                           title_text="Total Revenue ($)",
                           gridcolor=P["border"],
                           tickfont=dict(color=P["sub"]))
-        fig5.update_yaxes(categoryorder="total ascending",
-                          tickfont=dict(color=P["sub"],size=9))
-        st.plotly_chart(fig5, use_container_width=True)
-        ins("General Merchandise is the top revenue-generating role. "
-            "NGOs and Health Services follow despite lower fees "
-            "due to high application volumes.")
+        fig6.update_yaxes(categoryorder="total ascending",
+                          tickfont=dict(color=P["sub"],size=8))
+        st.plotly_chart(fig6, use_container_width=True)
+        ins("General Merchandise is the top revenue-generating role.")
 
-    with c6:
-        sec("Applicant Segments — K-Means Cluster Analysis (k=4)")
+    with c7:
+        sec("Applications by Day of Week")
+        do  = ["Monday","Tuesday","Wednesday",
+               "Thursday","Friday","Saturday"]
+        dow = fdf3["Day_of_Week"].value_counts()              .reindex(do).dropna().reset_index()
+        dow.columns = ["Day","Count"]
+        fig7 = go.Figure(go.Bar(
+            x=dow["Day"], y=dow["Count"],
+            marker_color=[P["teal"] if d=="Friday"
+                          else P["gold"] if d=="Thursday"
+                          else P["steel"] for d in dow["Day"]]))
+        L(fig7, 360, show_legend=False)
+        fig7.update_xaxes(tickangle=-20,
+                          tickfont=dict(color=P["sub"],size=9))
+        fig7.update_yaxes(title_text="Applications",
+                          gridcolor=P["border"],
+                          tickfont=dict(color=P["sub"]))
+        st.plotly_chart(fig7, use_container_width=True)
+        ins("Friday is the busiest day. Saturday has the lowest "
+            "volume, consistent with a reduced working day.")
+
+    with c8:
+        sec("Applicant Segments — K-Means (k=4)")
         cl = pd.DataFrame({
             "Cluster":["Cluster 0","Cluster 1",
                        "Cluster 2","Cluster 3"],
@@ -808,36 +814,35 @@ elif page == "Residency Permit Analysis":
             "Fee"    :[225,709,744,0],
             "DR"     :[67,100,0,47],
         })
-        fig6 = go.Figure()
+        fig8 = go.Figure()
         for i, row in cl.iterrows():
-            fig6.add_trace(go.Scatter(
+            fig8.add_trace(go.Scatter(
                 x=[row["Fee"]], y=[row["DR"]],
                 mode="markers+text",
-                marker=dict(size=max(row["Size"]/60,15),
+                marker=dict(size=max(row["Size"]/65,12),
                             color=COLORS[i], opacity=0.85,
                             line=dict(color="white",width=1.5)),
                 text=[row["Cluster"]],
                 textposition="top center",
-                textfont=dict(color=P["sub"],size=10),
+                textfont=dict(color=P["sub"],size=9),
                 name=row["Cluster"],
                 hovertemplate=(
                     f"<b>{row['Cluster']}</b><br>"
                     f"Size: {row['Size']:,}<br>"
                     f"Avg Fee: ${row['Fee']}<br>"
-                    f"Delivery Rate: {row['DR']}%"
+                    f"Delivery: {row['DR']}%"
                     "<extra></extra>")))
-        L(fig6, 380, show_legend=False)
-        fig6.update_xaxes(title_text="Average Fee ($)",
+        L(fig8, 360, show_legend=False)
+        fig8.update_xaxes(title_text="Average Fee ($)",
                           gridcolor=P["border"],
                           tickfont=dict(color=P["sub"]))
-        fig6.update_yaxes(title_text="Delivery Rate (%)",
+        fig8.update_yaxes(title_text="Delivery Rate (%)",
                           gridcolor=P["border"],
                           tickfont=dict(color=P["sub"]))
-        st.plotly_chart(fig6, use_container_width=True)
-        wrn("Cluster 2 — 1,649 applicants paid an average of $744 "
-            "but received no permit at time of data extraction. "
-            "This $1.23M backlog is concentrated in June–July 2026 "
-            "and represents permits in production, not rejections.")
+        st.plotly_chart(fig8, use_container_width=True)
+        wrn("Cluster 2: 1,649 applicants paid $744 avg "
+            "but received no permit at data extraction — "
+            "$1.23M backlog in June–July 2026.")
 # ════════════════════════════════════════════════════════════
 # PROCESS PERFORMANCE
 # ════════════════════════════════════════════════════════════
@@ -917,81 +922,51 @@ elif page == "Process Performance":
             "including the June peak of 87.80 applications per day.")
 
     with c2:
-        sec(f"What Happens to Processing Time With More Staff and Better Technology?")
+        sec(f"Sensitivity Analysis — Processing Time (days) at lambda={lam} apps/day")
         st.markdown(
             f"<p style='font-size:0.8rem;color:{P['sub']};margin-bottom:0.5rem;'>"
-            f"Each bar shows the average days an applicant waits at lambda={lam} "
-            f"applications per day. Blank = system collapses at that combination.</p>",
+            f"Each cell shows how long an applicant waits (in days) for a given "
+            f"number of officers (rows) and processing speed (columns). "
+            f"Empty cells = system collapses at that combination. "
+            f"Green = fast. Red = slow.</p>",
             unsafe_allow_html=True)
 
-        # Build readable comparison for key configurations
-        configs = [
-            ("Current\n(3 staff, manual)", 3, 5),
-            ("Add staff only\n(8 staff, manual)", 8, 5),
-            ("Digitise only\n(3 staff, digital)", 3, 12),
-            ("Minimum viable\n(6 staff, digital)", 6, 12),
-            ("Recommended\n(8 staff, digital)", 8, 12),
-            ("Optimal\n(10 staff, digital)", 10, 12),
-        ]
-        labels, values, colors_bar = [], [], []
-        for label, sc, mv in configs:
-            r = mms(lam, mv, sc)
-            labels.append(label)
-            if r["stable"]:
-                values.append(r["W"])
-                colors_bar.append(
-                    P["red"]   if r["W"] > 1.0
-                    else P["gold"] if r["W"] > 0.5
-                    else P["teal"])
-            else:
-                values.append(None)
-                colors_bar.append(P["red"])
+        sr  = list(range(3, 14))
+        mr  = [5, 8, 10, 12, 15, 20]
+        hd  = []
+        for sc in sr:
+            row = {"Servers (s)": sc}
+            for mv in mr:
+                r = mms(lam, mv, sc)
+                row[f"mu={mv}"] = round(r["W"], 3) if r["stable"] else None
+            hd.append(row)
+        hdf = pd.DataFrame(hd).set_index("Servers (s)")
 
-        fig2 = go.Figure()
-        # Add bars for stable configs
-        for i, (label, val, col) in enumerate(
-                zip(labels, values, colors_bar)):
-            if val is not None:
-                fig2.add_trace(go.Bar(
-                    x=[label], y=[val],
-                    marker_color=col,
-                    showlegend=False,
-                    hovertemplate=f"<b>{label}</b><br>"
-                                  f"Processing time: {val:.3f} days "
-                                  f"({val*8:.1f} hours)<extra></extra>"))
-            else:
-                fig2.add_trace(go.Bar(
-                    x=[label], y=[2.5],
-                    marker_color="rgba(230,57,70,0.3)",
-                    showlegend=False,
-                    hovertemplate=f"<b>{label}</b><br>"
-                                  f"UNSTABLE — queue never clears"
-                                  f"<extra></extra>",
-                    text=["UNSTABLE"],
-                    textposition="inside",
-                    textfont=dict(color=P["red"], size=11)))
-
-        fig2.add_hline(y=1.0, line_dash="dash",
-                       line_color=P["mint"],
-                       annotation_text="1-day target",
-                       annotation_font_color=P["mint"])
-        fig2.add_hline(y=0.125, line_dash="dot",
-                       line_color=P["teal"],
-                       annotation_text="Recommended (0.09d avg)",
-                       annotation_font_color=P["teal"])
-        L(fig2, 420, show_legend=False)
-        fig2.update_layout(barmode="group")
-        fig2.update_yaxes(title_text="Processing Time (days)",
-                          range=[0,3],
-                          gridcolor=P["border"],
-                          tickfont=dict(color=P["sub"]))
-        fig2.update_xaxes(tickfont=dict(color=P["sub"], size=9))
+        fig2 = px.imshow(
+            hdf,
+            text_auto=".2f",
+            aspect="auto",
+            color_continuous_scale="RdYlGn_r",
+            labels={"x": "Service Rate (mu) — apps/officer/day",
+                    "y": "Number of Officers (s)",
+                    "color": "Days"})
+        fig2.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            height=420,
+            font=dict(family="Inter", color=P["sub"], size=11),
+            margin=dict(l=0, r=0, t=28, b=0),
+            coloraxis_colorbar=dict(
+                tickfont=dict(color=P["sub"]),
+                title=dict(text="Days", font=dict(color=P["sub"]))))
+        fig2.update_xaxes(tickfont=dict(color=P["sub"]))
+        fig2.update_yaxes(tickfont=dict(color=P["sub"]))
         st.plotly_chart(fig2, use_container_width=True)
-        ins("Adding staff alone (red bar) barely helps — the system "
-            "is still overloaded at mu=5. Digitising verification "
-            "is what drives the improvement. The recommended "
-            "configuration (8 staff, digital) keeps wait time "
-            "under 2 hours even at peak demand.")
+        ins("Read this as: if SLID has 8 officers (row) and each processes "
+            "12 applications per day (column), the average wait is 0.09 days. "
+            "Moving right = digitisation improves speed. "
+            "Moving down = more staff. Both levers matter but digitisation "
+            "has the bigger impact.")
 
     st.markdown("")
     sec("Configuration Summary")
